@@ -22,10 +22,18 @@ const editor = document.getElementById("sideEditor");
 const year = new Date().getFullYear();
 
 // ================= AUTH =================
+const isLoginPage = window.location.pathname.includes("login.html");
+
 onAuthStateChanged(auth, async (u) => {
 
     if (u) {
         user = u;
+
+        // ONLY redirect if on login page
+        if (isLoginPage) {
+            window.location.href = "index.html";
+            return;
+        }
 
         document.getElementById("userName").innerText = u.displayName;
         document.getElementById("userPic").src = u.photoURL;
@@ -34,14 +42,17 @@ onAuthStateChanged(auth, async (u) => {
         generateCalendar();
 
     } else {
-        window.location.href = "login.html";
+        // ONLY redirect if NOT already on login page
+        if (!isLoginPage) {
+            window.location.href = "login.html";
+        }
     }
 });
 
 // ================= LOGOUT =================
 document.getElementById("logoutBtn").onclick = async () => {
     await signOut(auth);
-    window.location.href = "login.html";
+    // DO NOT manually redirect here
 };
 
 // ================= FIRESTORE =================
