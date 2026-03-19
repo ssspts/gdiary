@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IML Calendar</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase -->
+    <script type="module" src="script.js"></script>
+</head>
+
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+    <h1>📅 IML Calendar</h1>
+
+    <input type="date" id="datePicker">
+
+    <div class="auth-bar">
+        <button id="loginBtn">Login with Google</button>
+
+        <div id="userInfo">
+            <img id="userPic">
+            <span id="userName"></span>
+            <button id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar -->
+<div id="calendar" class="calendar-container"></div>
+
+<!-- Modal -->
+<div id="noteModal" class="modal">
+    <div class="modal-content">
+        <h3 id="selectedDate"></h3>
+        <textarea id="noteInput"></textarea>
+
+        <div class="modal-actions">
+            <button id="saveBtn">Save</button>
+            <button onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
