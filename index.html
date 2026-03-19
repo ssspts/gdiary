@@ -1,21 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IML Calendar</title>
-
-    <link rel="stylesheet" href="style.css">
-
-    <!-- IMPORTANT: module -->
-    <script type="module" src="script.js"></script>
-</head>
-
-<body>
-
 <!-- NAVBAR -->
 <div class="navbar">
     <h2>📅 IML Calendar</h2>
+
+    <div class="nav-center">
+        <input type="date" id="datePicker">
+    </div>
 
     <div class="nav-right">
         <img id="userPic" />
@@ -27,18 +16,14 @@
 <!-- CALENDAR -->
 <div id="calendar" class="calendar-container"></div>
 
-<!-- MODAL -->
-<div id="noteModal" class="modal">
-    <div class="modal-content">
+<!-- RIGHT SIDE EDITOR -->
+<div id="sideEditor" class="side-editor">
+    <div class="editor-header">
         <h3 id="selectedDate"></h3>
-        <textarea id="noteInput" placeholder="Write your note..."></textarea>
-
-        <div class="modal-actions">
-            <button id="saveBtn">Save</button>
-            <button onclick="closeModal()">Cancel</button>
-        </div>
+        <button onclick="closeEditor()">✖</button>
     </div>
-</div>
 
-</body>
-</html>
+    <textarea id="noteInput" placeholder="Write your note..."></textarea>
+
+    <button id="saveBtn">Save</button>
+</div>

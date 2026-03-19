@@ -20,7 +20,7 @@ const isLoginPage = window.location.pathname.includes("login.html");
 let user = null;
 let notes = {};
 let selectedDateKey = "";
-
+const editor = document.getElementById("sideEditor");
 // ================= AUTH =================
 onAuthStateChanged(auth, async (u) => {
 
@@ -73,20 +73,20 @@ async function loadNotes() {
     }
 }
 
-async function saveNote() {
-    const text = document.getElementById("noteInput").value;
-
-    if (text.trim()) {
-        notes[selectedDateKey] = text;
-    } else {
-        delete notes[selectedDateKey];
-    }
-
-    await setDoc(doc(db, "notes", user.uid), notes);
-
-    closeModal();
-    generateCalendar();
-}
+// async function saveNote() {
+//     const text = document.getElementById("noteInput").value;
+//
+//     if (text.trim()) {
+//         notes[selectedDateKey] = text;
+//     } else {
+//         delete notes[selectedDateKey];
+//     }
+//
+//     await setDoc(doc(db, "notes", user.uid), notes);
+//
+//     closeModal();
+//     generateCalendar();
+// }
 
 // ================= CALENDAR =================
 const calendar = document.getElementById("calendar");
@@ -139,13 +139,18 @@ function generateCalendar() {
 function openModal(dateKey) {
     selectedDateKey = dateKey;
 
-    document.getElementById("noteModal").style.display = "flex";
     document.getElementById("selectedDate").innerText = dateKey;
     document.getElementById("noteInput").value = notes[dateKey] || "";
+
+    editor.classList.add("open"); // slide in
 }
 
 window.closeModal = function () {
     document.getElementById("noteModal").style.display = "none";
+};
+
+window.closeEditor = function () {
+    editor.classList.remove("open");
 };
 
 // ================= EVENTS =================
@@ -163,6 +168,37 @@ if (loginBtn) {
             await signInWithPopup(auth, provider);
         } catch (err) {
             console.error("Login error:", err);
+        }
+    });
+}
+async function saveNote() {
+    const text = document.getElementById("noteInput").value;
+
+    if (text.trim()) {
+        notes[selectedDateKey] = text;
+    } else {
+        delete notes[selectedDateKey];
+    }
+
+    await setDoc(doc(db, "notes", user.uid), notes);
+
+    closeEditor();
+    generateCalendar();
+}
+
+const datePicker = document.getElementById("datePicker");
+
+if (datePicker) {
+    datePicker.addEventListener("change", function () {
+        const date = new Date(this.value);
+        const month = date.getMonth();
+
+        const calendar = document.getElementById("calendar");
+
+        if (calendar && calendar.children[month]) {
+            calendar.children[month].scrollIntoView({
+                behavior: "smooth"
+            });
         }
     });
 }
