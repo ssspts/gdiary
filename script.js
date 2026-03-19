@@ -154,3 +154,15 @@ const saveBtn = document.getElementById("saveBtn");
 if (saveBtn) {
     saveBtn.addEventListener("click", saveNote);
 }
+// ================= LOGIN =================
+const loginBtn = document.getElementById("loginBtn");
+
+if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (err) {
+            console.error("Login error:", err);
+        }
+    });
+}
