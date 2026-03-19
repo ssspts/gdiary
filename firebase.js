@@ -13,7 +13,7 @@ import {
 // 🔐 YOUR CONFIG (SAFE HERE)
 const firebaseConfig = {
     apiKey: "AIzaSyARpxyEbhg3vchTigKLt6fo2UMSGXXi4tk",
-    authDomain: "Yiml-diary.firebaseapp.com",
+    authDomain: "iml-diary.firebaseapp.com",
     projectId: "iml-diary"
 };
 
