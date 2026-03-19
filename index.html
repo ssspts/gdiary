@@ -7,37 +7,31 @@
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- Firebase -->
+    <!-- IMPORTANT: module -->
     <script type="module" src="script.js"></script>
 </head>
 
 <body>
 
-<!-- Top Bar -->
-<div class="top-bar">
-    <h1>📅 IML Calendar</h1>
+<!-- NAVBAR -->
+<div class="navbar">
+    <h2>📅 IML Calendar</h2>
 
-    <input type="date" id="datePicker">
-
-    <div class="auth-bar">
-        <button id="loginBtn">Login with Google</button>
-
-        <div id="userInfo">
-            <img id="userPic">
-            <span id="userName"></span>
-            <button id="logoutBtn">Logout</button>
-        </div>
+    <div class="nav-right">
+        <img id="userPic" />
+        <span id="userName"></span>
+        <button id="logoutBtn">Logout</button>
     </div>
 </div>
 
-<!-- Calendar -->
+<!-- CALENDAR -->
 <div id="calendar" class="calendar-container"></div>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div id="noteModal" class="modal">
     <div class="modal-content">
         <h3 id="selectedDate"></h3>
-        <textarea id="noteInput"></textarea>
+        <textarea id="noteInput" placeholder="Write your note..."></textarea>
 
         <div class="modal-actions">
             <button id="saveBtn">Save</button>
