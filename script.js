@@ -1,5 +1,4 @@
-// ================= IMPORT FIREBASE =================
-import { auth, db, provider } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 
 import {
     signOut,
@@ -12,74 +11,57 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ================= GLOBAL =================
 let user = null;
 let notes = {};
-let selectedDateKey = "";
+let selectedDate = "";
 
 const calendar = document.getElementById("calendar");
 const editor = document.getElementById("sideEditor");
 const year = new Date().getFullYear();
 
-// ================= AUTH =================
-const isLoginPage = window.location.pathname.includes("login.html");
-
+// AUTH
 onAuthStateChanged(auth, async (u) => {
 
     if (u) {
         user = u;
 
-        // ONLY redirect if on login page
-        if (isLoginPage) {
-            window.location.href = "index.html";
-            return;
-        }
-
         document.getElementById("userName").innerText = u.displayName;
         document.getElementById("userPic").src = u.photoURL;
 
         await loadNotes();
-        generateCalendar();
+        renderCalendar();
 
     } else {
-        // ONLY redirect if NOT already on login page
-        if (!isLoginPage) {
-            window.location.href = "login.html";
-        }
+        window.location.href = "login.html";
     }
 });
 
-// ================= LOGOUT =================
+// LOGOUT
 document.getElementById("logoutBtn").onclick = async () => {
     await signOut(auth);
-    // DO NOT manually redirect here
 };
 
-// ================= FIRESTORE =================
+// LOAD NOTES
 async function loadNotes() {
-    const ref = doc(db, "notes", user.uid);
-    const snap = await getDoc(ref);
-
+    const snap = await getDoc(doc(db, "notes", user.uid));
     notes = snap.exists() ? snap.data() : {};
 }
 
+// SAVE NOTE
 async function saveNote() {
     const text = document.getElementById("noteInput").value;
 
-    if (text.trim()) {
-        notes[selectedDateKey] = text;
-    } else {
-        delete notes[selectedDateKey];
-    }
+    if (text) notes[selectedDate] = text;
+    else delete notes[selectedDate];
 
     await setDoc(doc(db, "notes", user.uid), notes);
 
     closeEditor();
-    generateCalendar();
+    renderCalendar();
 }
 
-// ================= CALENDAR =================
-function generateCalendar() {
+// CALENDAR
+function renderCalendar() {
     calendar.innerHTML = "";
 
     for (let m = 0; m < 12; m++) {
@@ -87,42 +69,41 @@ function generateCalendar() {
         const monthDiv = document.createElement("div");
         monthDiv.className = "month";
 
-        const monthName = new Date(year, m).toLocaleString('default', { month: 'long' });
-        monthDiv.innerHTML = `<h2>${monthName}</h2>`;
+        const name = new Date(year, m).toLocaleString("default", { month: "long" });
+        monthDiv.innerHTML = `<h3>${name}</h3>`;
 
-        const daysDiv = document.createElement("div");
-        daysDiv.className = "days";
+        const grid = document.createElement("div");
+        grid.className = "grid";
 
         const days = new Date(year, m + 1, 0).getDate();
 
         for (let d = 1; d <= days; d++) {
+
             const day = document.createElement("div");
             day.className = "day";
 
-            day.setAttribute("data-day", d);
+            const key = `${year}-${m+1}-${d}`;
 
-            const key = `${year}-${m + 1}-${d}`;
+            if (notes[key]) day.classList.add("saved");
 
-            if (notes[key]) {
-                day.classList.add("saved");
-            }
+            day.innerHTML = `<span>${d}</span>`;
 
             day.onclick = () => openEditor(key);
 
-            daysDiv.appendChild(day);
+            grid.appendChild(day);
         }
 
-        monthDiv.appendChild(daysDiv);
+        monthDiv.appendChild(grid);
         calendar.appendChild(monthDiv);
     }
 }
 
-// ================= SIDE EDITOR =================
-function openEditor(dateKey) {
-    selectedDateKey = dateKey;
+// EDITOR
+function openEditor(date) {
+    selectedDate = date;
 
-    document.getElementById("selectedDate").innerText = dateKey;
-    document.getElementById("noteInput").value = notes[dateKey] || "";
+    document.getElementById("selectedDate").innerText = date;
+    document.getElementById("noteInput").value = notes[date] || "";
 
     editor.classList.add("open");
 }
@@ -131,17 +112,11 @@ window.closeEditor = function () {
     editor.classList.remove("open");
 };
 
-// ================= EVENTS =================
+// SAVE BTN
 document.getElementById("saveBtn").onclick = saveNote;
 
-// ================= DATE PICKER =================
+// DATE PICKER SCROLL
 document.getElementById("datePicker").addEventListener("change", function () {
-    const date = new Date(this.value);
-    const month = date.getMonth();
-
-    if (calendar.children[month]) {
-        calendar.children[month].scrollIntoView({
-            behavior: "smooth"
-        });
-    }
+    const month = new Date(this.value).getMonth();
+    calendar.children[month].scrollIntoView({ behavior: "smooth" });
 });
