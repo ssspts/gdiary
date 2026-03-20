@@ -1,8 +1,6 @@
-// ================= IMPORT FIREBASE (CLEAN) =================
-import { auth, db, provider } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 
 import {
-    signInWithPopup,
     signOut,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -13,101 +11,66 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ================= PAGE CHECK =================
-const isLoginPage = window.location.pathname.includes("login.html");
-
-// ================= GLOBAL =================
 let user = null;
 let notes = {};
-let selectedDateKey = "";
+let selectedDate = "";
 
-// ================= AUTH =================
+const calendar = document.getElementById("calendar");
+const editor = document.getElementById("sideEditor");
+
+// AUTH (NO LOOP)
 onAuthStateChanged(auth, async (u) => {
 
-    if (u) {
-        user = u;
-
-        // Redirect from login → main
-        if (isLoginPage) {
-            window.location.href = "index.html";
-            return;
-        }
-
-        // Navbar info
-        const nameEl = document.getElementById("userName");
-        const picEl = document.getElementById("userPic");
-
-        if (nameEl) nameEl.innerText = u.displayName;
-        if (picEl) picEl.src = u.photoURL;
-
-        await loadNotes();
-        generateCalendar();
-
-    } else {
-        // Redirect to login if not authenticated
-        if (!isLoginPage) {
-            window.location.href = "login.html";
-        }
+    if (!u) {
+        window.location.href = "login.html";
+        return;
     }
+
+    user = u;
+
+    document.getElementById("userName").innerText = u.displayName;
+    document.getElementById("userPic").src = u.photoURL;
+
+    await loadNotes();
+    renderCalendar();
 });
 
-// ================= LOGOUT =================
-const logoutBtn = document.getElementById("logoutBtn");
+// LOGOUT
+document.getElementById("logoutBtn").onclick = async () => {
+    await signOut(auth);
+};
 
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.href = "login.html";
-    });
-}
-
-// ================= FIRESTORE =================
+// LOAD
 async function loadNotes() {
-    const ref = doc(db, "notes", user.uid);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-        notes = snap.data();
-    } else {
-        notes = {};
-    }
+    const snap = await getDoc(doc(db, "notes", user.uid));
+    notes = snap.exists() ? snap.data() : {};
 }
 
+// SAVE
 async function saveNote() {
-    const text = document.getElementById("noteInput").value;
+    const val = document.getElementById("noteInput").value;
 
-    if (text.trim()) {
-        notes[selectedDateKey] = text;
-    } else {
-        delete notes[selectedDateKey];
-    }
+    if (val) notes[selectedDate] = val;
+    else delete notes[selectedDate];
 
     await setDoc(doc(db, "notes", user.uid), notes);
 
-    closeModal();
-    generateCalendar();
+    closeEditor();
+    renderCalendar();
 }
 
-// ================= CALENDAR =================
-const calendar = document.getElementById("calendar");
-const year = new Date().getFullYear();
-
-function generateCalendar() {
-    if (!calendar) return;
-
+// CALENDAR
+function renderCalendar() {
     calendar.innerHTML = "";
 
+    const year = new Date().getFullYear();
+
     for (let m = 0; m < 12; m++) {
+        const month = document.createElement("div");
+        month.className = "month";
 
-        const monthDiv = document.createElement("div");
-        monthDiv.className = "month";
-
-        const monthName = new Date(year, m).toLocaleString('default', { month: 'long' });
-
-        monthDiv.innerHTML = `<h2>${monthName}</h2>`;
-
-        const daysDiv = document.createElement("div");
-        daysDiv.className = "days";
+        const grid = document.createElement("div");
+        grid.className = "grid";
 
         const days = new Date(year, m + 1, 0).getDate();
 
@@ -115,54 +78,36 @@ function generateCalendar() {
             const day = document.createElement("div");
             day.className = "day";
 
-            // Google calendar style
-            day.innerText = "";
-            day.setAttribute("data-day", d);
+            const key = `${year}-${m+1}-${d}`;
 
-            const key = `${year}-${m + 1}-${d}`;
+            if (notes[key]) day.classList.add("saved");
 
-            if (notes[key]) {
-                day.classList.add("saved");
-            }
+            day.innerText = d;
+            day.onclick = () => openEditor(key);
 
-            day.onclick = () => openModal(key);
-
-            daysDiv.appendChild(day);
+            grid.appendChild(day);
         }
 
-        monthDiv.appendChild(daysDiv);
-        calendar.appendChild(monthDiv);
+        month.appendChild(grid);
+        calendar.appendChild(month);
     }
 }
 
-// ================= MODAL =================
-function openModal(dateKey) {
-    selectedDateKey = dateKey;
-
-    document.getElementById("noteModal").style.display = "flex";
-    document.getElementById("selectedDate").innerText = dateKey;
-    document.getElementById("noteInput").value = notes[dateKey] || "";
+// EDITOR
+function openEditor(date) {
+    selectedDate = date;
+    document.getElementById("noteInput").value = notes[date] || "";
+    document.getElementById("selectedDate").innerText = date;
+    editor.classList.add("open");
 }
 
-window.closeModal = function () {
-    document.getElementById("noteModal").style.display = "none";
-};
+window.closeEditor = () => editor.classList.remove("open");
 
-// ================= EVENTS =================
-const saveBtn = document.getElementById("saveBtn");
+// SAVE BTN
+document.getElementById("saveBtn").onclick = saveNote;
 
-if (saveBtn) {
-    saveBtn.addEventListener("click", saveNote);
-}
-// ================= LOGIN =================
-const loginBtn = document.getElementById("loginBtn");
-
-if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (err) {
-            console.error("Login error:", err);
-        }
-    });
-}
+// DATE PICKER
+document.getElementById("datePicker").addEventListener("change", function () {
+    const month = new Date(this.value).getMonth();
+    calendar.children[month].scrollIntoView({ behavior: "smooth" });
+});

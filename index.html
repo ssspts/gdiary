@@ -6,38 +6,33 @@
     <title>IML Calendar</title>
 
     <link rel="stylesheet" href="style.css">
-
-    <!-- IMPORTANT: module -->
     <script type="module" src="script.js"></script>
 </head>
 
 <body>
 
-<!-- NAVBAR -->
 <div class="navbar">
-    <h2>📅 IML Calendar</h2>
+    <h2>📅 IML</h2>
+
+    <input type="date" id="datePicker">
 
     <div class="nav-right">
-        <img id="userPic" />
+        <img id="userPic">
         <span id="userName"></span>
         <button id="logoutBtn">Logout</button>
     </div>
 </div>
 
-<!-- CALENDAR -->
-<div id="calendar" class="calendar-container"></div>
+<div id="calendar" class="calendar"></div>
 
-<!-- MODAL -->
-<div id="noteModal" class="modal">
-    <div class="modal-content">
+<div id="sideEditor" class="editor">
+    <div class="editor-header">
         <h3 id="selectedDate"></h3>
-        <textarea id="noteInput" placeholder="Write your note..."></textarea>
-
-        <div class="modal-actions">
-            <button id="saveBtn">Save</button>
-            <button onclick="closeModal()">Cancel</button>
-        </div>
+        <button onclick="closeEditor()">✕</button>
     </div>
+
+    <textarea id="noteInput"></textarea>
+    <button id="saveBtn">Save</button>
 </div>
 
 </body>
