@@ -1,110 +1,108 @@
-import { auth, db } from "./firebase.js";
+// Firebase auth and database assumed in firebase-config.js
 
-import {
-    signOut,
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+let currentDate = null;
+let currentFileId = null;
+let files = {}; // {date: [{id, title, content}]}
 
-import {
-    doc,
-    setDoc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const datePicker = document.getElementById("datePicker");
+const datesList = document.getElementById("datesList");
+const filesList = document.getElementById("filesList");
+const editor = document.getElementById("editor");
+const fileTitle = document.getElementById("fileTitle");
 
-let user = null;
-let notes = {};
-let drafts = {};
-let selectedDate = "";
+const saveBtn = document.getElementById("saveBtn");
+const draftBtn = document.getElementById("draftBtn");
+const addFileBtn = document.getElementById("addFileBtn");
 
-// AUTH
-onAuthStateChanged(auth, async (u) => {
+const logoutBtn = document.getElementById("logoutBtn");
 
-    if (!u) {
-        window.location.href = "login.html";
-        return;
-    }
+function init() {
+    const today = new Date().toISOString().substr(0, 10);
+    datePicker.value = today;
+    currentDate = today;
+    loadDateFiles(today);
+}
 
-    user = u;
-
-    document.getElementById("userName").innerText = u.displayName;
-    document.getElementById("userPic").src = u.photoURL;
-
-    await loadData();
-    renderDates();
+datePicker.addEventListener("change", () => {
+    currentDate = datePicker.value;
+    loadDateFiles(currentDate);
 });
 
-// LOGOUT
-document.getElementById("logoutBtn").onclick = () => signOut(auth);
+function loadDateFiles(date) {
+    filesList.innerHTML = "";
+    editor.value = "";
+    fileTitle.textContent = "Untitled";
+    currentFileId = null;
 
-// LOAD DATA
-async function loadData() {
-    const snap = await getDoc(doc(db, "notes", user.uid));
-    const data = snap.exists() ? snap.data() : {};
-
-    notes = data.notes || {};
-    drafts = data.drafts || {};
+    const userId = firebase.auth().currentUser.uid;
+    const ref = firebase.database().ref("users/" + userId + "/files/" + date);
+    ref.once("value", snapshot => {
+        files[date] = snapshot.val() || [];
+        renderFilesList();
+    });
 }
 
-// RENDER SIDEBAR DATES
-function renderDates() {
-    const sidebar = document.getElementById("sidebar");
-    sidebar.innerHTML = "";
+function renderFilesList() {
+    filesList.innerHTML = "";
+    const list = files[currentDate] || [];
+    list.forEach(f => {
+        const li = document.createElement("li");
+        li.textContent = f.title || "Untitled";
+        li.classList.toggle("active", f.id === currentFileId);
+        li.addEventListener("click", () => openFile(f.id));
+        filesList.appendChild(li);
+    });
+}
 
-    const today = new Date();
-
-    for (let i = -30; i <= 365; i++) {
-        const d = new Date();
-        d.setDate(today.getDate() + i);
-
-        const key = d.toISOString().split("T")[0];
-
-        const div = document.createElement("div");
-        div.className = "date-item";
-        div.innerText = key;
-
-        div.onclick = () => selectDate(key, div);
-
-        sidebar.appendChild(div);
+function openFile(fileId) {
+    currentFileId = fileId;
+    const f = files[currentDate].find(f => f.id === fileId);
+    if(f){
+        fileTitle.textContent = f.title || "Untitled";
+        editor.value = f.content || "";
+        renderFilesList();
     }
 }
 
-// SELECT DATE
-function selectDate(date, element) {
-    selectedDate = date;
+addFileBtn.addEventListener("click", () => {
+    const newId = Date.now().toString();
+    const newFile = {id: newId, title: "Untitled", content: ""};
+    files[currentDate] = files[currentDate] || [];
+    files[currentDate].push(newFile);
+    currentFileId = newId;
+    renderFilesList();
+    openFile(newId);
+});
 
-    document.querySelectorAll(".date-item")
-        .forEach(el => el.classList.remove("active"));
+saveBtn.addEventListener("click", () => saveFile("published"));
+draftBtn.addEventListener("click", () => saveFile("draft"));
 
-    element.classList.add("active");
-
-    document.getElementById("selectedDate").innerText = date;
-
-    const content = notes[date] || drafts[date] || "";
-    document.getElementById("editor").innerHTML = content;
+function saveFile(status) {
+    if(!currentFileId) return;
+    const f = files[currentDate].find(f => f.id === currentFileId);
+    if(f){
+        f.content = editor.value;
+        const userId = firebase.auth().currentUser.uid;
+        firebase.database().ref("users/" + userId + "/files/" + currentDate + "/" + currentFileId).set(f)
+            .then(() => alert("Saved!"))
+            .catch(err => alert(err));
+    }
 }
 
-// SAVE FINAL
-document.getElementById("saveBtn").onclick = async () => {
-    if (!selectedDate) return;
-
-    notes[selectedDate] = document.getElementById("editor").innerHTML;
-
-    await persist();
-};
-
-// SAVE DRAFT
-document.getElementById("draftBtn").onclick = async () => {
-    if (!selectedDate) return;
-
-    drafts[selectedDate] = document.getElementById("editor").innerHTML;
-
-    await persist();
-};
-
-// SAVE TO FIRESTORE
-async function persist() {
-    await setDoc(doc(db, "notes", user.uid), {
-        notes,
-        drafts
+function checkAuth() {
+    firebase.auth().onAuthStateChanged(user => {
+        if(!user) {
+            window.location.href = "login.html";
+        }
     });
 }
+
+logoutBtn.addEventListener("click", () => {
+    firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+    });
+});
+
+// Initialize
+checkAuth();
+init();
