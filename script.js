@@ -17,23 +17,22 @@ let selectedDate = "";
 
 const calendar = document.getElementById("calendar");
 const editor = document.getElementById("sideEditor");
-const year = new Date().getFullYear();
 
-// AUTH
+// AUTH (NO LOOP)
 onAuthStateChanged(auth, async (u) => {
 
-    if (u) {
-        user = u;
-
-        document.getElementById("userName").innerText = u.displayName;
-        document.getElementById("userPic").src = u.photoURL;
-
-        await loadNotes();
-        renderCalendar();
-
-    } else {
+    if (!u) {
         window.location.href = "login.html";
+        return;
     }
+
+    user = u;
+
+    document.getElementById("userName").innerText = u.displayName;
+    document.getElementById("userPic").src = u.photoURL;
+
+    await loadNotes();
+    renderCalendar();
 });
 
 // LOGOUT
@@ -41,17 +40,17 @@ document.getElementById("logoutBtn").onclick = async () => {
     await signOut(auth);
 };
 
-// LOAD NOTES
+// LOAD
 async function loadNotes() {
     const snap = await getDoc(doc(db, "notes", user.uid));
     notes = snap.exists() ? snap.data() : {};
 }
 
-// SAVE NOTE
+// SAVE
 async function saveNote() {
-    const text = document.getElementById("noteInput").value;
+    const val = document.getElementById("noteInput").value;
 
-    if (text) notes[selectedDate] = text;
+    if (val) notes[selectedDate] = val;
     else delete notes[selectedDate];
 
     await setDoc(doc(db, "notes", user.uid), notes);
@@ -64,13 +63,11 @@ async function saveNote() {
 function renderCalendar() {
     calendar.innerHTML = "";
 
+    const year = new Date().getFullYear();
+
     for (let m = 0; m < 12; m++) {
-
-        const monthDiv = document.createElement("div");
-        monthDiv.className = "month";
-
-        const name = new Date(year, m).toLocaleString("default", { month: "long" });
-        monthDiv.innerHTML = `<h3>${name}</h3>`;
+        const month = document.createElement("div");
+        month.className = "month";
 
         const grid = document.createElement("div");
         grid.className = "grid";
@@ -78,7 +75,6 @@ function renderCalendar() {
         const days = new Date(year, m + 1, 0).getDate();
 
         for (let d = 1; d <= days; d++) {
-
             const day = document.createElement("div");
             day.className = "day";
 
@@ -86,36 +82,31 @@ function renderCalendar() {
 
             if (notes[key]) day.classList.add("saved");
 
-            day.innerHTML = `<span>${d}</span>`;
-
+            day.innerText = d;
             day.onclick = () => openEditor(key);
 
             grid.appendChild(day);
         }
 
-        monthDiv.appendChild(grid);
-        calendar.appendChild(monthDiv);
+        month.appendChild(grid);
+        calendar.appendChild(month);
     }
 }
 
 // EDITOR
 function openEditor(date) {
     selectedDate = date;
-
-    document.getElementById("selectedDate").innerText = date;
     document.getElementById("noteInput").value = notes[date] || "";
-
+    document.getElementById("selectedDate").innerText = date;
     editor.classList.add("open");
 }
 
-window.closeEditor = function () {
-    editor.classList.remove("open");
-};
+window.closeEditor = () => editor.classList.remove("open");
 
 // SAVE BTN
 document.getElementById("saveBtn").onclick = saveNote;
 
-// DATE PICKER SCROLL
+// DATE PICKER
 document.getElementById("datePicker").addEventListener("change", function () {
     const month = new Date(this.value).getMonth();
     calendar.children[month].scrollIntoView({ behavior: "smooth" });

@@ -11,15 +11,10 @@
 
 <body>
 
-<!-- NAVBAR -->
 <div class="navbar">
-    <div class="nav-left">
-        <h2>📅 IML</h2>
-    </div>
+    <h2>📅 IML</h2>
 
-    <div class="nav-center">
-        <input type="date" id="datePicker">
-    </div>
+    <input type="date" id="datePicker">
 
     <div class="nav-right">
         <img id="userPic">
@@ -28,18 +23,15 @@
     </div>
 </div>
 
-<!-- CALENDAR -->
 <div id="calendar" class="calendar"></div>
 
-<!-- SIDE EDITOR -->
 <div id="sideEditor" class="editor">
     <div class="editor-header">
         <h3 id="selectedDate"></h3>
         <button onclick="closeEditor()">✕</button>
     </div>
 
-    <textarea id="noteInput" placeholder="Add note..."></textarea>
-
+    <textarea id="noteInput"></textarea>
     <button id="saveBtn">Save</button>
 </div>
 

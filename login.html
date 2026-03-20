@@ -3,18 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - IML</title>
+    <title>Login</title>
 
-    <link rel="stylesheet" href="style.css">
-    <script type="module" src="script.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f8f9fa;
+            font-family: Arial;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+
+    <script type="module" src="login.js"></script>
 </head>
 
-<body class="login-body">
+<body>
 
-<div class="login-container">
-    <h1>IML Diary</h1>
-    <button id="loginBtn">Login with Google</button>
-</div>
+<button id="loginBtn">Login with Google</button>
 
 </body>
 </html>
