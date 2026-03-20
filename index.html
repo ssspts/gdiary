@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IML Calendar</title>
+    <title>IML Notes</title>
 
     <link rel="stylesheet" href="style.css">
     <script type="module" src="script.js"></script>
@@ -11,28 +11,37 @@
 
 <body>
 
+<!-- NAVBAR -->
 <div class="navbar">
-    <h2>📅 IML</h2>
-
-    <input type="date" id="datePicker">
+    <h2>📝 IML Notes</h2>
 
     <div class="nav-right">
+        <button id="saveBtn">Save</button>
+        <button id="draftBtn">Draft</button>
+
         <img id="userPic">
         <span id="userName"></span>
         <button id="logoutBtn">Logout</button>
     </div>
 </div>
 
-<div id="calendar" class="calendar"></div>
+<div class="container">
 
-<div id="sideEditor" class="editor">
-    <div class="editor-header">
-        <h3 id="selectedDate"></h3>
-        <button onclick="closeEditor()">✕</button>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar"></div>
+
+    <!-- EDITOR -->
+    <div class="editor-container">
+        <div class="editor-header" id="selectedDate">Select a date</div>
+
+        <div
+                id="editor"
+                contenteditable="true"
+                class="editor"
+                placeholder="Start writing..."
+        ></div>
     </div>
 
-    <textarea id="noteInput"></textarea>
-    <button id="saveBtn">Save</button>
 </div>
 
 </body>

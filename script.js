@@ -13,12 +13,10 @@ import {
 
 let user = null;
 let notes = {};
+let drafts = {};
 let selectedDate = "";
 
-const calendar = document.getElementById("calendar");
-const editor = document.getElementById("sideEditor");
-
-// AUTH (NO LOOP)
+// AUTH
 onAuthStateChanged(auth, async (u) => {
 
     if (!u) {
@@ -31,83 +29,82 @@ onAuthStateChanged(auth, async (u) => {
     document.getElementById("userName").innerText = u.displayName;
     document.getElementById("userPic").src = u.photoURL;
 
-    await loadNotes();
-    renderCalendar();
+    await loadData();
+    renderDates();
 });
 
 // LOGOUT
-document.getElementById("logoutBtn").onclick = async () => {
-    await signOut(auth);
-};
+document.getElementById("logoutBtn").onclick = () => signOut(auth);
 
-// LOAD
-async function loadNotes() {
+// LOAD DATA
+async function loadData() {
     const snap = await getDoc(doc(db, "notes", user.uid));
-    notes = snap.exists() ? snap.data() : {};
+    const data = snap.exists() ? snap.data() : {};
+
+    notes = data.notes || {};
+    drafts = data.drafts || {};
 }
 
-// SAVE
-async function saveNote() {
-    const val = document.getElementById("noteInput").value;
+// RENDER SIDEBAR DATES
+function renderDates() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.innerHTML = "";
 
-    if (val) notes[selectedDate] = val;
-    else delete notes[selectedDate];
+    const today = new Date();
 
-    await setDoc(doc(db, "notes", user.uid), notes);
+    for (let i = -30; i <= 365; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
 
-    closeEditor();
-    renderCalendar();
-}
+        const key = d.toISOString().split("T")[0];
 
-// CALENDAR
-function renderCalendar() {
-    calendar.innerHTML = "";
+        const div = document.createElement("div");
+        div.className = "date-item";
+        div.innerText = key;
 
-    const year = new Date().getFullYear();
+        div.onclick = () => selectDate(key, div);
 
-    for (let m = 0; m < 12; m++) {
-        const month = document.createElement("div");
-        month.className = "month";
-
-        const grid = document.createElement("div");
-        grid.className = "grid";
-
-        const days = new Date(year, m + 1, 0).getDate();
-
-        for (let d = 1; d <= days; d++) {
-            const day = document.createElement("div");
-            day.className = "day";
-
-            const key = `${year}-${m+1}-${d}`;
-
-            if (notes[key]) day.classList.add("saved");
-
-            day.innerText = d;
-            day.onclick = () => openEditor(key);
-
-            grid.appendChild(day);
-        }
-
-        month.appendChild(grid);
-        calendar.appendChild(month);
+        sidebar.appendChild(div);
     }
 }
 
-// EDITOR
-function openEditor(date) {
+// SELECT DATE
+function selectDate(date, element) {
     selectedDate = date;
-    document.getElementById("noteInput").value = notes[date] || "";
+
+    document.querySelectorAll(".date-item")
+        .forEach(el => el.classList.remove("active"));
+
+    element.classList.add("active");
+
     document.getElementById("selectedDate").innerText = date;
-    editor.classList.add("open");
+
+    const content = notes[date] || drafts[date] || "";
+    document.getElementById("editor").innerHTML = content;
 }
 
-window.closeEditor = () => editor.classList.remove("open");
+// SAVE FINAL
+document.getElementById("saveBtn").onclick = async () => {
+    if (!selectedDate) return;
 
-// SAVE BTN
-document.getElementById("saveBtn").onclick = saveNote;
+    notes[selectedDate] = document.getElementById("editor").innerHTML;
 
-// DATE PICKER
-document.getElementById("datePicker").addEventListener("change", function () {
-    const month = new Date(this.value).getMonth();
-    calendar.children[month].scrollIntoView({ behavior: "smooth" });
-});
+    await persist();
+};
+
+// SAVE DRAFT
+document.getElementById("draftBtn").onclick = async () => {
+    if (!selectedDate) return;
+
+    drafts[selectedDate] = document.getElementById("editor").innerHTML;
+
+    await persist();
+};
+
+// SAVE TO FIRESTORE
+async function persist() {
+    await setDoc(doc(db, "notes", user.uid), {
+        notes,
+        drafts
+    });
+}
